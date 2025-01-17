@@ -18,7 +18,7 @@ class RegisterUserSerializer(ModelSerializer):
         user = CustomUser.objects.create_user(**validated_data)
         return user
     
-class LoginUserSerializer():
+class LoginUserSerializer(Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True)
 
