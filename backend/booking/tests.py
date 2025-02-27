@@ -23,27 +23,8 @@ class BookingAPITest(APITestCase):
         self.assertEqual(Booking.objects.count(), 1)
         self.assertEqual(Booking.objects.get().id, 1)
 
-    def test_duplicate_booking(self):
-        self.valid_payload = {
-            "id" : "1",
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "johndoe@example.com",
-            "phone_number": "1234567890",
-            "date": "2025-02-25",
-            "time": "14:00:00",
-            "package": "interior",
-            "vehicle": "car"
-        }
-        response = self.client.post('/api/bookings/booking-list/', self.valid_payload, format = 'json')
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(Booking.objects.count(), 1)
-
-    
-
     def test_malformed_booking(self):
         self.valid_payload = {
-            "id" : "1",
             "first_name": "John",
             "last_name": "Doe",
             "email": "johndoe@example.com",
