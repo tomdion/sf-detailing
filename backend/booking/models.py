@@ -1,6 +1,17 @@
 from django.db import models
 
-# Create your models here.
+class Package(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    display_name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.display_name} (${self.price})"
+    
+    class Meta:
+        ordering = ['price']
+
 class Booking(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -9,20 +20,14 @@ class Booking(models.Model):
     date = models.DateField()
     time = models.TimeField()
 
-    PACKAGE_TYPE = [
-        ('interior', 'Interior'),
-        ('exterior', 'Exterior'),
-        ('interior + exterior', 'Interior + Exterior'),
-    ]
-
-    package = models.CharField(max_length=20, choices=PACKAGE_TYPE)
+    # New ForeignKey field (replace the old CharField)
+    package = models.ForeignKey(Package, on_delete=models.PROTECT)
 
     VEHICLE_TYPE = [
         ('car', 'Car'),
         ('suv', 'SUV'),
         ('truck', 'Truck'),
     ]
-
     vehicle = models.CharField(max_length=20, choices=VEHICLE_TYPE)
 
     def __str__(self):
