@@ -1,12 +1,14 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from .models import Booking
+from .models import Booking, Package
 
 # Create your tests here.
 class BookingAPITest(APITestCase):
 
     def test_create_booking(self):
+        package_obj = Package.objects.get(name="interior")
+
         self.valid_payload = {
             "id" : "1",
             "first_name": "John",
@@ -15,7 +17,7 @@ class BookingAPITest(APITestCase):
             "phone_number": "1234567890",
             "date": "2025-02-25",
             "time": "14:00:00",
-            "package": "interior",
+            "package": package_obj.id,
             "vehicle": "car"
         }
         response = self.client.post('/api/bookings/booking-list/', self.valid_payload, format = 'json')
