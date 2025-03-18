@@ -1,13 +1,22 @@
 from rest_framework import serializers
-from .models import Booking, Package
+from .models import Booking, Package, BusinessHours
 
 class PackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Package
         fields = ('id', 'name', 'display_name', 'price', 'description')
 
+class BusinessHoursSerializer(serializers.ModelSerializer):
+    day_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = BusinessHours
+        fields = ('id', 'day', 'day_name', 'opening_time', 'closing_time', 'is_open')
+        
+    def get_day_name(self, obj):
+        return obj.get_day_display()
+
 class BookingSerializer(serializers.ModelSerializer):
-    # Add a nested serializer for displaying package details in responses
     package_details = PackageSerializer(source='package', read_only=True)
     
     class Meta:
@@ -20,6 +29,13 @@ class BookingSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         return representation
+    
+    def validate(self, data):
+        is_valid, message = BusinessHours.is_valid_booking_time(data['date'], data['time'])
+        if not is_valid:
+            raise serializers.ValidationError(message)
+        
+        return data
     
     def create(self, validated_data):
         import uuid

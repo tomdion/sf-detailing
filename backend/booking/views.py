@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
-from .models import Booking, Package
-from .serializers import BookingSerializer
+from .models import Booking, Package, BusinessHours
+from .serializers import BookingSerializer, BusinessHoursSerializer
 from datetime import datetime, timedelta
 from .services import EmailService
 
@@ -13,8 +13,16 @@ def api_root(request, format=None):
     return Response({
         'bookings': reverse('booking-list', request=request, format=format),
         'user-bookings': reverse('user-bookings', request=request, format=format),
-        'booking-confirm': reverse('booking-confirm', request=request, format=format) + '?token={token}'
+        'booking-confirm': reverse('booking-confirm', request=request, format=format) + '?token={token}',
+        'business-hours': reverse('business-hours', request=request, format=format)
     })
+
+class BusinessHoursView(generics.ListAPIView):
+    """View for retrieving business hours"""
+    queryset = BusinessHours.objects.all()
+    serializer_class = BusinessHoursSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
 class BookingListView(generics.ListCreateAPIView):
     queryset = Booking.objects.all()
@@ -33,14 +41,11 @@ class BookingListView(generics.ListCreateAPIView):
         if self.check_time_conflict(serializer.validated_data['date'], serializer.validated_data['time'], time_restriction):
             raise serializers.ValidationError("A booking already exists within the restricted time.")
         
-        # Save the booking
         booking = serializer.save()
         
-        # Send confirmation email
         try:
             EmailService.send_booking_confirmation(booking)
         except Exception as e:
-            # Log the error but don't prevent booking creation
             print(f"Error sending confirmation email: {e}")
 
     def get_time_restriction(self, package):
@@ -62,7 +67,6 @@ class BookingListView(generics.ListCreateAPIView):
         start_time = booking_datetime - timedelta(hours=restriction_hours)
         end_time = booking_datetime + timedelta(hours=restriction_hours)
         
-        # Extract just the time component for comparison
         start_time_only = start_time.time()
         end_time_only = end_time.time()
         
@@ -98,7 +102,6 @@ def confirm_booking(request):
         booking.confirmed = True
         booking.save()
         
-        # Send confirmation notification
         try:
             EmailService.send_booking_confirmed(booking)
         except Exception as e:
