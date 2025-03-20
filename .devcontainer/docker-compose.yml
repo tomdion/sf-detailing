@@ -8,6 +8,7 @@ services:
 
     volumes:
       - ../..:/workspaces:cached
+      #- frontend-node-modules:/workspaces/sf-detailing/frontend/node_modules
 
     env_file:
       - ../.env
@@ -15,11 +16,16 @@ services:
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    # Use separate network settings to enable port forwarding
+    networks:
+      - app-network
+    
+    depends_on:
+      - db
 
-    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
+    ports:
+      - "8000:8000"  # Django backend
+      - "3000:3000"  # Next.js frontend
 
   db:
     image: postgres:latest
@@ -28,9 +34,14 @@ services:
       - postgres-data:/var/lib/postgresql/data
     env_file:
       - ../.env
+    networks:
+      - app-network
+    ports:
+      - "5432:5432"  # PostgreSQL
 
-    # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
+networks:
+  app-network:
 
 volumes:
   postgres-data:
+  frontend-node-modules:
