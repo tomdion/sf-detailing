@@ -3,7 +3,7 @@ export default function Home() {
     <div className="mx-auto max-w-6xl">
       <section className="py-12 text-center">
         <h1 className="mb-4 text-4xl font-bold">SF Detailing</h1>
-        <p className="mb-8 text-xl">Professional car detailing services in San Francisco</p>
+        <p className="mb-8 text-xl">Detailing buisness based out of Western Mass</p>
         <div className="flex justify-center">
           <a
             href="/book"
