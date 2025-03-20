@@ -46,3 +46,12 @@ class BookingSerializer(serializers.ModelSerializer):
             validated_data['user'] = request.user
             
         return super().create(validated_data)
+    
+class GuestBookingLookupSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
+    def validate_email(self, value):
+        # Check if bookings exist for this email
+        if not Booking.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No bookings found for this email address")
+        return value

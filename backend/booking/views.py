@@ -3,16 +3,20 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.views import APIView
+from django.utils import timezone
+from datetime import timedelta
 from .models import Booking, Package, BusinessHours
-from .serializers import BookingSerializer, BusinessHoursSerializer
-from datetime import datetime, timedelta
+from .serializers import BookingSerializer, BusinessHoursSerializer, GuestBookingLookupSerializer
 from .services import EmailService
+from .permissions import IsAdminUser, IsOwnerOrAdmin
 
 @api_view(['GET'])
 def api_root(request, format=None):
     return Response({
         'bookings': reverse('booking-list', request=request, format=format),
         'user-bookings': reverse('user-bookings', request=request, format=format),
+        'guest-bookings': reverse('guest-bookings', request=request, format=format),
         'booking-confirm': reverse('booking-confirm', request=request, format=format) + '?token={token}',
         'business-hours': reverse('business-hours', request=request, format=format)
     })
@@ -25,8 +29,21 @@ class BusinessHoursView(generics.ListAPIView):
     authentication_classes = []
 
 class BookingListView(generics.ListCreateAPIView):
-    queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    
+    def get_permissions(self):
+        """
+        Return different permissions depending on the HTTP method:
+        - GET: Admin users only
+        - POST: Anyone can create a booking
+        """
+        if self.request.method == 'GET':
+            return [IsAdminUser()]
+        return [AllowAny()]
+    
+    def get_queryset(self):
+        """Return all bookings, but only for admin users"""
+        return Booking.objects.all()
 
     def get_serializer_context(self):
         """Add request to serializer context"""
@@ -42,6 +59,11 @@ class BookingListView(generics.ListCreateAPIView):
             raise serializers.ValidationError("A booking already exists within the restricted time.")
         
         booking = serializer.save()
+        
+        # Store the email in session for guest users to manage their bookings
+        if not self.request.user.is_authenticated:
+            email = serializer.validated_data.get('email')
+            self.request.session['booking_email'] = email
         
         try:
             EmailService.send_booking_confirmation(booking)
@@ -63,7 +85,7 @@ class BookingListView(generics.ListCreateAPIView):
             return 0
     
     def check_time_conflict(self, booking_date, booking_time, restriction_hours):
-        booking_datetime = datetime.combine(booking_date, booking_time)
+        booking_datetime = timezone.datetime.combine(booking_date, booking_time)
         start_time = booking_datetime - timedelta(hours=restriction_hours)
         end_time = booking_datetime + timedelta(hours=restriction_hours)
         
@@ -87,6 +109,24 @@ class UserBookingsView(generics.ListAPIView):
     def get_queryset(self):
         """Return only bookings for the authenticated user"""
         return Booking.objects.filter(user=self.request.user)
+
+class GuestBookingsView(APIView):
+    """View for guests to retrieve their bookings by email"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = GuestBookingLookupSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            
+            # Store email in session for later use in deletion
+            request.session['booking_email'] = email
+            
+            bookings = Booking.objects.filter(email=email)
+            booking_serializer = BookingSerializer(bookings, many=True)
+            
+            return Response(booking_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -117,3 +157,21 @@ class BookingDeleteView(generics.DestroyAPIView):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
     lookup_field = 'id'
+    permission_classes = [IsOwnerOrAdmin]
+    
+    def get_serializer_context(self):
+        """Add request to serializer context"""
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+    
+    def perform_destroy(self, instance):
+        booking_datetime = timezone.make_aware(
+            timezone.datetime.combine(instance.date, instance.time)
+        )
+        now = timezone.now()
+        
+        if (booking_datetime - now).total_seconds() < 24 * 3600:
+            raise serializers.ValidationError("Bookings must be cancelled at least 24 hours in advance.")
+        
+        super().perform_destroy(instance)
