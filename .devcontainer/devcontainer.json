@@ -34,5 +34,5 @@
 	},
 
 	// Use 'postCreateCommand' to run commands after the container is created
-	"postCreateCommand": "echo 'Node.js version:' && node -v && echo 'npm version:' && npm -v"
+	"postCreateCommand": "echo 'Node.js version:' && node -v && echo 'npm version:' && npm -v && git config --global --add safe.directory /workspaces/sf-detailing"
 }
