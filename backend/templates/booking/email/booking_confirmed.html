@@ -58,6 +58,9 @@
                     <strong>Time:</strong> {{ booking.time|time:"g:i A" }}<br>
                     <strong>Service:</strong> {{ booking.package.display_name }}<br>
                     <strong>Vehicle:</strong> {{ booking.vehicle|title }}<br>
+                    {% if booking.address %}
+                    <strong>Address:</strong> {{ booking.address.street_address }}, {{ booking.address.city }}, {{ booking.address.state }} {{ booking.address.zip_code }}<br>
+                    {% endif %}
                     <strong>Price:</strong> ${{ booking.package.price }}
                 </p>
             </div>

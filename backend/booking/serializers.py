@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Booking, Package, BusinessHours
+from .models import Booking, Package, BusinessHours, Address
 
 class PackageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,9 +23,41 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         fields = ('id', 'first_name', 'last_name', 'email', 'phone_number', 
                   'date', 'time', 'package', 'package_details', 'vehicle',
-                  'confirmed', 'created_at')
+                  'confirmed', 'created_at', 'address')
         read_only_fields = ('confirmed', 'created_at')
+
+    def create(self, validated_data):
+        address_data = validated_data.pop('address', None)
         
+        if address_data:
+            address = Address.objects.create(**address_data)
+            validated_data['address'] = address
+        
+        booking = Booking.objects.create(**validated_data)
+        return booking
+    
+    def update(self, instance, validated_data):
+        address_data = validated_data.pop('address', None)
+        
+        if address_data:
+            address = instance.address
+            if address:
+                # Update existing address
+                for key, value in address_data.items():
+                    setattr(address, key, value)
+                address.save()
+            else:
+                # Create new address
+                address = Address.objects.create(**address_data)
+                instance.address = address
+        
+        # Update other booking fields
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        
+        instance.save()
+        return instance
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         return representation
@@ -55,3 +87,8 @@ class GuestBookingLookupSerializer(serializers.Serializer):
         if not Booking.objects.filter(email=value).exists():
             raise serializers.ValidationError("No bookings found for this email address")
         return value
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = ('id', 'street_address', 'city', 'state', 'zip_code')

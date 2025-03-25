@@ -15,6 +15,17 @@ class Package(models.Model):
     class Meta:
         ordering = ['price']
 
+# backend/booking/models.py
+
+class Address(models.Model):
+    street_address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=50)
+    zip_code = models.CharField(max_length=20)
+    
+    def __str__(self):
+        return f"{self.street_address}, {self.city}, {self.state} {self.zip_code}"
+
 class BusinessHours(models.Model):
     DAYS_OF_WEEK = [
         (0, 'Monday'),
@@ -84,6 +95,8 @@ class Booking(models.Model):
     date = models.DateField()
     time = models.TimeField()
     package = models.ForeignKey(Package, on_delete=models.PROTECT)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True)
+
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
