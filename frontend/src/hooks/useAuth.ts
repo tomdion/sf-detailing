@@ -1,29 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getUserInfo, logout } from '@/api/auth';
-import { setCookie, deleteCookie, getCookie } from 'cookies-next';
+import { setCookie, deleteCookie } from 'cookies-next';
+
+// Define a type for your user object based on your API response
+interface User {
+  id: number;
+  email: string;
+  username: string;
+  // Add any other properties that your user object contains
+}
 
 export const useAuth = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    async function loadUserFromCookie() {
-      try {
-        const response = await getUserInfo();
-        setUser(response);
-      } catch (error) {
-        console.log('Not authenticated');
-      } finally {
-        setLoading(false);
-      }
+  const loadUserData = async () => {
+    try {
+      const response = await getUserInfo();
+      setUser(response);
+    } catch (error) {
+      console.log('Not authenticated', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    
-    loadUserFromCookie();
+  };
+
+  useEffect(() => {
+    loadUserData();
   }, []);
 
-  const loginUser = (userData) => {
+  const loginUser = (userData: User) => {
     setUser(userData);
     setCookie('isLoggedIn', 'true');
   };
@@ -39,5 +48,12 @@ export const useAuth = () => {
     }
   };
 
-  return { user, loading, loginUser, logoutUser, isLoggedIn: !!user };
+  return { 
+    user, 
+    loading, 
+    loginUser, 
+    logoutUser, 
+    refreshUser: loadUserData,
+    isLoggedIn: !!user 
+  };
 };
