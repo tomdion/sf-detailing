@@ -13,16 +13,16 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 z-50 w-full bg-white shadow-md">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto">
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="pl-0">
             <Image
               src="/images/grayscale.png"
               alt="SF Detailing Logo"
-              className="h-10 w-auto object-cover" 
-              width={40}
-              height={40}
+              className="h-10 w-auto object-cover"
+              width={60}
+              height={60}
             />
           </Link>
 

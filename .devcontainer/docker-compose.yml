@@ -24,7 +24,7 @@ services:
       - db
 
     ports:
-      - "8000:8000"  # Django backend
+      - "8001:8001"  # Django backend
       - "3000:3000"  # Next.js frontend
 
   db:
@@ -37,7 +37,7 @@ services:
     networks:
       - app-network
     ports:
-      - "5432:5432"  # PostgreSQL
+      - "5433:5432"  # PostgreSQL
 
 networks:
   app-network:

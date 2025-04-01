@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from datetime import timedelta
 from .models import Booking, Package, BusinessHours
-from .serializers import BookingSerializer, BusinessHoursSerializer, GuestBookingLookupSerializer
+from .serializers import BookingSerializer, BusinessHoursSerializer, GuestBookingLookupSerializer, PackageSerializer
 from .services import EmailService
 from .permissions import IsAdminUser, IsOwnerOrAdmin
 
@@ -175,3 +175,10 @@ class BookingDeleteView(generics.DestroyAPIView):
             raise serializers.ValidationError("Bookings must be cancelled at least 24 hours in advance.")
         
         super().perform_destroy(instance)
+
+class PackageListView(generics.ListAPIView):
+    """View for retrieving available service packages"""
+    queryset = Package.objects.all()
+    serializer_class = PackageSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
