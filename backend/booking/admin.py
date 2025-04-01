@@ -1,7 +1,28 @@
 from django.contrib import admin
-from .models import Booking, Package, BusinessHours
+from .models import Booking, Package, BusinessHours, Addon, BookingAddon
 # Register your models here.
 admin.site.register(Booking)
+
+@admin.register(Addon)
+class AddonAdmin(admin.ModelAdmin):
+    list_display = ('display_name', 'price', 'active')
+    list_editable = ['price', 'active']
+    search_fields = ['name', 'display_name', 'description']
+    actions = ['make_active', 'make_inactive']
+    
+    def make_active(self, request, queryset):
+        updated = queryset.update(active=True)
+        self.message_user(request, f'Activated {updated} add-ons.')
+    make_active.short_description = "Mark selected add-ons as active"
+    
+    def make_inactive(self, request, queryset):
+        updated = queryset.update(active=False)
+        self.message_user(request, f'Deactivated {updated} add-ons.')
+    make_inactive.short_description = "Mark selected add-ons as inactive"
+
+class BookingAddonInline(admin.TabularInline):
+    model = BookingAddon
+    extra = 0
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):

@@ -15,6 +15,56 @@ class Package(models.Model):
     class Meta:
         ordering = ['price']
 
+# backend/booking/models.py
+class Addon(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    display_name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    description = models.TextField(blank=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.display_name} (${self.price})"
+    
+    class Meta:
+        ordering = ['price']
+        
+    def can_be_deleted(self):
+        """Check if this add-on is being used in any bookings"""
+        return not self.bookingaddon_set.exists()
+
+class BookingAddon(models.Model):
+    booking = models.ForeignKey('Booking', on_delete=models.CASCADE, related_name='addons')
+    addon = models.ForeignKey('Addon', on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField(default=1)
+    price_at_booking = models.DecimalField(max_digits=6, decimal_places=2)
+    
+    class Meta:
+        unique_together = ('booking', 'addon')
+        
+    def save(self, *args, **kwargs):
+        # Store the current price when created
+        if not self.pk and not self.price_at_booking:
+            self.price_at_booking = self.addon.price
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.booking} - {self.addon.display_name} x{self.quantity}"
+        
+    def get_total(self):
+        return self.price_at_booking * self.quantity
+    
+class Address(models.Model):
+    street_address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=50)
+    zip_code = models.CharField(max_length=20)
+    
+    def __str__(self):
+        return f"{self.street_address}, {self.city}, {self.state} {self.zip_code}"
+
 class BusinessHours(models.Model):
     DAYS_OF_WEEK = [
         (0, 'Monday'),
@@ -84,6 +134,8 @@ class Booking(models.Model):
     date = models.DateField()
     time = models.TimeField()
     package = models.ForeignKey(Package, on_delete=models.PROTECT)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True)
+
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -96,6 +148,12 @@ class Booking(models.Model):
     confirmed = models.BooleanField(default=False)
     confirmation_token = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def total_price(self):
+        """Calculate the total price including package and add-ons"""
+        base_price = self.package.price
+        addon_price = sum(ba.get_total() for ba in self.addons.all())
+        return base_price + addon_price
 
     VEHICLE_TYPE = [
         ('car', 'Car'),

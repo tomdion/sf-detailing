@@ -11,6 +11,7 @@ urlpatterns = [
     path('confirm/', views.confirm_booking, name='booking-confirm'),
     path('business-hours/', views.BusinessHoursView.as_view(), name='business-hours'),
     path('packages/', views.PackageListView.as_view(), name='packages')
+    path('addons/', views.AddonListView.as_view(), name='addon-list'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
