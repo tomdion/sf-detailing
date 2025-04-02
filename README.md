@@ -1,6 +1,6 @@
 # S&F Detailing
 
-A full-stack web application for a western massachusetts car detailing business that allows customers to book detailing services online. The application features a user-friendly booking system, authentication, and service management.
+A full-stack web application for S&F Auto Detailing, a mobile car detailing business based in western massachusettes, that allows customers to book detailing services online. The application features a user-friendly booking system, authentication, and service management.
 
 ## Tech Stack
 
