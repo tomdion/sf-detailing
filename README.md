@@ -178,6 +178,6 @@ frontend/
 - `GET /api/bookings/packages/`: Get service packages
 - `GET /api/bookings/addons/`: Get service add-ons
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License.
+This software is proprietary and is the property of S&F Detailing. Unauthorized use, distribution, or modification of this software is strictly prohibited.
