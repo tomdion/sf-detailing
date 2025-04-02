@@ -1,6 +1,11 @@
 from rest_framework import serializers
 from .models import Booking, Package, BusinessHours, Address, Addon, BookingAddon
 
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = ('id', 'street_address', 'city', 'state', 'zip_code')
+
 class AddonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Addon
@@ -32,6 +37,7 @@ class BusinessHoursSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     package_details = PackageSerializer(source='package', read_only=True)
     addons = BookingAddonSerializer(many=True, read_only=True)
+    address = AddressSerializer(read_only=True)
     addon_ids = serializers.ListField(
         child=serializers.DictField(),
         write_only=True,
@@ -41,7 +47,6 @@ class BookingSerializer(serializers.ModelSerializer):
         max_digits=8, 
         decimal_places=2, 
         read_only=True, 
-        source='total_price'
     )
     
     class Meta:
@@ -151,7 +156,3 @@ class GuestBookingLookupSerializer(serializers.Serializer):
             raise serializers.ValidationError("No bookings found for this email address")
         return value
 
-class AddressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Address
-        fields = ('id', 'street_address', 'city', 'state', 'zip_code')
