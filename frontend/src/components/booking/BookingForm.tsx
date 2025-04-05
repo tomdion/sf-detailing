@@ -41,12 +41,20 @@ interface BookingFormProps {
   onSuccess: () => void;
 }
 
+export interface VehiclePrice {
+  id: number;
+  vehicle_type: string;
+  vehicle_type_display: string;
+  price: number;
+}
+
 export interface Package {
   id: number;
   name: string;
   display_name: string;
   price: number;
   description: string;
+  vehicle_prices: VehiclePrice[];
 }
 
 export interface BusinessHour {
@@ -142,6 +150,8 @@ const BookingForm = ({ packages, businessHours, onSuccess }: BookingFormProps) =
         axiosError.response?.data?.message || 
         "An error occurred while creating your booking. Please try again."
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -171,6 +181,7 @@ const BookingForm = ({ packages, businessHours, onSuccess }: BookingFormProps) =
           {/* Service Details */}
           <ServiceDetails 
             register={register}
+            watch={watch}
             errors={errors}
             packages={packages}
             selectedDate={selectedDate}
