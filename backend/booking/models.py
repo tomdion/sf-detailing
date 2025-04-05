@@ -15,7 +15,6 @@ class Package(models.Model):
     class Meta:
         ordering = ['price']
 
-# backend/booking/models.py
 class Addon(models.Model):
     name = models.CharField(max_length=50, unique=True)
     display_name = models.CharField(max_length=100)
@@ -168,3 +167,22 @@ class Booking(models.Model):
     
     class Meta:
         ordering = ['-date', '-time']
+
+class VehiclePackagePrice(models.Model):
+    """Model to store vehicle-specific package pricing"""
+    VEHICLE_CHOICES = [
+        ('car', 'Car'),
+        ('suv', 'SUV'),
+        ('truck', 'Truck'),
+    ]
+    
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='vehicle_prices')
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_CHOICES)
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    
+    class Meta:
+        unique_together = ('package', 'vehicle_type')
+        ordering = ['package', 'vehicle_type']
+    
+    def __str__(self):
+        return f"{self.package.display_name} - {self.get_vehicle_type_display()} (${self.price})"

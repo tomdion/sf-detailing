@@ -1,7 +1,28 @@
+# backend/booking/admin.py (updated)
+
 from django.contrib import admin
-from .models import Booking, Package, BusinessHours, Addon, BookingAddon
+from .models import Booking, Package, BusinessHours, Addon, BookingAddon, VehiclePackagePrice
+
 # Register your models here.
 admin.site.register(Booking)
+
+class VehiclePriceInline(admin.TabularInline):
+    model = VehiclePackagePrice
+    extra = 3  # Show 3 empty forms
+    min_num = 3  # Require at least 3 (one for each vehicle type)
+
+@admin.register(Package)
+class PackageAdmin(admin.ModelAdmin):
+    list_display = ('display_name', 'price')
+    list_editable = ['price']
+    search_fields = ('name', 'display_name')
+    inlines = [VehiclePriceInline]
+
+@admin.register(VehiclePackagePrice)
+class VehiclePackagePriceAdmin(admin.ModelAdmin):
+    list_display = ('package', 'vehicle_type', 'price')
+    list_editable = ['price']
+    list_filter = ('package', 'vehicle_type')
 
 @admin.register(Addon)
 class AddonAdmin(admin.ModelAdmin):
@@ -23,13 +44,6 @@ class AddonAdmin(admin.ModelAdmin):
 class BookingAddonInline(admin.TabularInline):
     model = BookingAddon
     extra = 0
-
-@admin.register(Package)
-class PackageAdmin(admin.ModelAdmin):
-    list_display = ('display_name', 'price')
-    list_editable = ['price']  # Only include the price field
-    list_display_links = ['display_name']  # Display name links to the edit form
-    search_fields = ('name', 'display_name')
 
 @admin.register(BusinessHours)
 class BusinessHoursAdmin(admin.ModelAdmin):
